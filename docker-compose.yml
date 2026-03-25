@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: cuenta_confiable
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  frontend-angular:
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile
+      target: development
+    container_name: angular-frontend
+    ports:
+      - "4200:4200"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - auth
+      - goals
+      - savings
+      - purchases
+      - storage
+    networks:
+      - app-network
+    volumes:
+      - ./frontend-angular:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+  auth:
+    build:
+      context: ./backend/auth
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/
+      - MONGO_DB=cuenta_confiable
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  goals:
+    build:
+      context: ./backend/goals
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/
+      - MONGO_DB=cuenta_confiable
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  savings:
+    build:
+      context: ./backend/savings
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/
+      - MONGO_DB=cuenta_confiable
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  purchases:
+    build:
+      context: ./backend/purchases
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/
+      - MONGO_DB=cuenta_confiable
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  storage:
+    build:
+      context: ./backend/storage
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/
+      - MONGO_DB=cuenta_confiable
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
